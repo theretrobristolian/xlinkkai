@@ -14,7 +14,7 @@ This repository contains a Bash script to automate the installation and configur
 
 This script performs the following tasks:
 1. Updates and upgrades your system.
-2. Sets the hostname of the machine to `xlinkkai1`.
+2. Sets the hostname of the machine to `xlinkkai`.
 3. Installs required dependencies such as `ca-certificates`, `curl`, and `gnupg`.
 4. Configures the XLink Kai Debian repository and imports its GPG key.
 5. Installs the **XLink Kai Engine**.

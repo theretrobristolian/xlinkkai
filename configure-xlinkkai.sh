@@ -8,10 +8,10 @@ echo "Updating and upgrading system..."
 sudo apt-get update -y
 sudo apt-get upgrade -y
 
-# Set the hostname to xlinkkai1
-echo "Setting hostname to 'xlinkkai1'..."
-sudo hostnamectl set-hostname xlinkkai1
-echo "127.0.1.1 xlinkkai1" | sudo tee -a /etc/hosts > /dev/null
+# Set the hostname to xlinkkai
+echo "Setting hostname to 'xlinkkai'..."
+sudo hostnamectl set-hostname xlinkkai
+echo "127.0.1.1 xlinkkai" | sudo tee -a /etc/hosts > /dev/null
 
 # Install required packages
 echo "Installing required packages..."
