@@ -30,6 +30,33 @@ echo "Updating package lists and installing XLink Kai..."
 sudo apt-get update
 sudo apt-get install -y xlinkkai
 
+# Create the kaiengine service file
+echo "Creating the kaiengine service..."
+sudo bash -c 'cat > /etc/systemd/system/kaiengine.service <<EOF
+[Unit]
+Description=kaiengine
+Wants=network.target
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+ExecStartPre=/bin/sleep 30
+ExecStart=/usr/bin/kaiengine
+GuessMainPID=yes
+Restart=always
+StartLimitInterval=5min
+StartLimitBurst=4
+StartLimitAction=reboot-force
+EOF'
+
+# Reload systemd, enable and start the kaiengine service
+echo "Enabling and starting the kaiengine service..."
+sudo systemctl daemon-reload
+sudo systemctl enable kaiengine
+sudo systemctl start kaiengine
+
 # Clean up
 echo "Cleaning up..."
 sudo apt-get autoremove -y
