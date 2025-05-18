@@ -62,4 +62,35 @@ echo "Cleaning up..."
 sudo apt-get autoremove -y
 sudo apt-get clean
 
-echo "Configuration complete!"
+# Get the IP address of the VM
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
+if [ -z "$IP_ADDRESS" ]; then
+    IP_ADDRESS="192.168.1.10" # Example fallback IP
+fi
+
+# Display helpful information to the user
+echo -e "\n========================================="
+echo "Installation and service setup completed!"
+echo "To check the status of the kaiengine service, run:"
+echo "  sudo systemctl status kaiengine"
+echo ""
+echo "If you need to restart the service, run:"
+echo "  sudo systemctl restart kaiengine"
+echo ""
+echo "Why use XLink Kai? XLink Kai allows you to play system-link games over the internet with other players worldwide."
+echo ""
+echo "To access the XLink Kai Web UI, go to one of the following URLs:"
+echo "  http://$IP_ADDRESS:34522"
+echo "  OR, if DNS is configured correctly:"
+echo "  http://xlinkkai:34522"
+echo "========================================="
+echo ""
+echo "This script has been provided by TheRetroBristolian 2025."
+echo "Further information can be found at:"
+echo "  https://github.com/theretrobristolian/xlinkkai"
+echo "  https://www.youtube.com/@TheRetroBristolian"
+echo ""
+echo "This script could not have been possible without special thanks to the XLink Kai team:"
+echo "  https://www.teamxlink.co.uk"
+echo "  https://discord.gg/dZRpsxyp - Team XLink (Official) Discord Server"
+echo "Special thanks to user @CrunchBite."
