@@ -50,33 +50,42 @@ This script performs the following tasks:
     ```bash
     sudo ./configure-xlinkkai.sh
 
-Access the Web UI:
+## Access the Web UI
+
 After the script completes, you will see a summary with the Web UI URL. It will look something like this:
 
-http://<IP_ADDRESS>:34522 (replace <IP_ADDRESS> with your VM's IP address).
-If DNS is configured correctly, you can also use:
-http://xlinkkai:34522
-Log in to XLink Kai:
+- `http://<IP_ADDRESS>:34522` (replace `<IP_ADDRESS>` with your VM's IP address).
+- If DNS is configured correctly, you can also use: `http://xlinkkai:34522`.
 
-Use your XLink Kai account credentials to log in.
-If you don’t have an account, create one at XLink Kai Website.
-Optional Steps:
+### Log in to XLink Kai:
+- Use your XLink Kai account credentials to log in.
+- If you don’t have an account, create one at [XLink Kai Website].
 
-Navigate to the Settings in the Web UI:
-Change the color scheme to your preference.
-Enable auto-login for convenience.
-Change the default port to 30000 if desired.
-Special Thanks
-This script has been provided by TheRetroBristolian 2025.
+---
+
+### Optional Steps:
+- Navigate to the **Settings** in the Web UI:
+  - Change the color scheme to your preference.
+  - Enable auto-login for convenience.
+  - Change the default port to **30000** if desired.
+
+---
+
+## Special Thanks
+
+This script has been provided by **TheRetroBristolian 2025**.  
 For further information and updates, visit:
+- [GitHub Repository]
+- [YouTube Channel]
 
-GitHub Repository
-YouTube Channel
-This script would not have been possible without special thanks to the XLink Kai team:
+This script would not have been possible without special thanks to the **XLink Kai team**:
+- [Team XLink Website]
+- [Team XLink (Official) Discord Server]
 
-Team XLink Website
-Team XLink (Official) Discord Server
-Special thanks to @CrunchBite for their contributions and support.
+Special thanks to **@CrunchBite** for their contributions and support.
 
-Feedback
+---
+
+## Feedback
+
 We welcome feedback on improvements or issues. Please feel free to open an issue or submit a pull request in this repository. Happy gaming!
