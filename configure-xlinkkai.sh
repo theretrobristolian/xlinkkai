@@ -15,21 +15,42 @@ die() {
 }
 
 prompt_confirm() {
-  read -rp "$1 (y/N): " response
+  read -rp "$1 (Y/N): " response
   [[ "$response" =~ ^([yY][eE]?[sS]?|[yY])$ ]]
 }
 
 # ----------------------------
-# Initial Setup
+# Clear screen & show header
 # ----------------------------
 clear
-echo "========================================"
-echo "🔧 XLink Kai Automated Installer"
-echo "========================================"
-echo "This script will help you install, configure, or remove XLink Kai on your system."
-echo "It supports Ubuntu Server and Debian 12 (and similar distros)."
-echo
+echo -e "\e[1;36m"
+echo "  __   __   _ _ _       _        _  _   _   _     "
+echo "  \\ \\ / /__| (_) | ___ | | ___  | || | | | | |___ "
+echo "   \\ V / -_) | | |/ -_)| |/ _ \\ | __ | | |_| (_-< "
+echo "    \\_/\\___|_|_|_|\\___||_|\\___/ |_||_|  \\___//__/ "
+echo "                                                  "
+echo "           XLink Kai Automated Installer           "
+echo -e "\e[0m"
 
+echo -e "\e[90m"
+echo "============================================================"
+echo "This script helps you install, configure, or remove XLink Kai"
+echo "Supported systems: Ubuntu Server, Debian 12, RetroNAS, etc."
+echo
+echo "Options include:"
+echo " - Uninstall existing install"
+echo " - Change hostname to 'xlinkkai'"
+echo " - Install and run XLink Kai as a systemd service"
+echo " - Add helpful MOTD on SSH login"
+echo
+echo "You will be prompted for all options up front."
+echo "A summary will be shown before proceeding."
+echo "============================================================"
+echo -e "\e[0m"
+
+# ----------------------------
+# Variables & Defaults
+# ----------------------------
 CURRENT_HOSTNAME=$(hostname)
 INSTALL_DIR="/etc"
 CONFIG_FILE="$INSTALL_DIR/kaiengine.conf"
@@ -38,31 +59,52 @@ SERVICE_NAME="xlink-kai"
 # ----------------------------
 # Collect User Options
 # ----------------------------
-prompt_confirm "Would you like to uninstall XLink Kai and remove its config?" && UNINSTALL=true || UNINSTALL=false
-prompt_confirm "Your current hostname is '$CURRENT_HOSTNAME'. Would you like to change it to 'xlinkkai'?" && CHANGE_HOSTNAME=true || CHANGE_HOSTNAME=false
-prompt_confirm "Do you want to install and run XLink Kai as a service?" && INSTALL_SERVICE=true || INSTALL_SERVICE=false
-prompt_confirm "Would you like to add helpful login info to your SSH Welcome message?" && ADD_MOTD=true || ADD_MOTD=false
+if prompt_confirm "Would you like to uninstall XLink Kai and remove its config?"; then
+  UNINSTALL=true
+else
+  UNINSTALL=false
+fi
+
+if prompt_confirm "Your current hostname is '$CURRENT_HOSTNAME'. Would you like to change it to 'xlinkkai'?"; then
+  CHANGE_HOSTNAME=true
+else
+  CHANGE_HOSTNAME=false
+fi
+
+if prompt_confirm "Do you want to install and run XLink Kai as a systemd service?"; then
+  INSTALL_SERVICE=true
+else
+  INSTALL_SERVICE=false
+fi
+
+if prompt_confirm "Would you like to add helpful login info to your SSH Welcome message?"; then
+  ADD_MOTD=true
+else
+  ADD_MOTD=false
+fi
 
 # ----------------------------
-# Show Summary and Confirm
+# Show Summary & Confirm
 # ----------------------------
-echo "\nYou selected the following options:"
+echo -e "\n\e[1;33mYou selected the following options:\e[0m"
 $UNINSTALL && echo " - Uninstall existing XLink Kai install" || echo " - Do NOT uninstall existing install"
-$CHANGE_HOSTNAME && echo " - Change hostname to xlinkkai" || echo " - Keep hostname as '$CURRENT_HOSTNAME'"
-$INSTALL_SERVICE && echo " - Install and run XLink Kai as a systemd service" || echo " - Do NOT install XLink Kai service"
-$ADD_MOTD && echo " - Update login MOTD with XLink Kai info" || echo " - Do NOT modify SSH MOTD"
+$CHANGE_HOSTNAME && echo " - Change hostname to 'xlinkkai'" || echo " - Keep hostname as '$CURRENT_HOSTNAME'"
+$INSTALL_SERVICE && echo " - Install and run XLink Kai as a systemd service" || echo " - Do NOT install service"
+$ADD_MOTD && echo " - Add helpful MOTD on SSH login" || echo " - Do NOT modify SSH MOTD"
 
-echo -e "\n⚠️  This script may:
- - Run apt update/upgrade silently
- - Install new packages
- - Modify /etc/hostname and /etc/hosts
- - Write to /etc/motd or /etc/update-motd.d
- - Create a systemd service"
+echo -e "\n\e[1;31m⚠️  Warning: This script will perform system changes including:\e[0m"
+echo " - Running apt update/upgrade silently"
+echo " - Installing or removing packages"
+echo " - Modifying /etc/hostname and /etc/hosts"
+echo " - Creating or removing a systemd service"
+echo " - Writing to MOTD files for SSH logins"
 
-prompt_confirm "Are you sure you want to proceed with these changes?" || die "User aborted."
+if ! prompt_confirm "Are you sure you want to proceed with these changes?"; then
+  die "User aborted."
+fi
 
 # ----------------------------
-# Uninstall (if chosen)
+# Uninstall
 # ----------------------------
 if $UNINSTALL; then
   log "Uninstalling XLink Kai..."
@@ -70,7 +112,7 @@ if $UNINSTALL; then
   sudo systemctl disable "$SERVICE_NAME" || true
   sudo rm -f "/etc/systemd/system/$SERVICE_NAME.service"
   sudo rm -f "$CONFIG_FILE"
-  sudo systemctl daemon-reexec || true
+  sudo systemctl daemon-reload || true
   sudo apt-get remove --purge -y xlinkkai || true
   sudo apt-get autoremove -y
   log "XLink Kai has been uninstalled."
@@ -78,33 +120,35 @@ if $UNINSTALL; then
 fi
 
 # ----------------------------
-# Hostname Change (if chosen)
+# Change Hostname
 # ----------------------------
 if $CHANGE_HOSTNAME; then
-  log "Setting hostname to 'xlinkkai'..."
+  log "Changing hostname to 'xlinkkai'..."
   sudo hostnamectl set-hostname xlinkkai
+  # Remove old 127.0.1.1 entries for previous hostname to avoid duplicates
+  sudo sed -i "/127.0.1.1\s\+$CURRENT_HOSTNAME/d" /etc/hosts
   echo "127.0.1.1 xlinkkai" | sudo tee -a /etc/hosts > /dev/null
   CURRENT_HOSTNAME="xlinkkai"
 fi
 
 # ----------------------------
-# Silent Update & Upgrade
+# Silent system update/upgrade
 # ----------------------------
-log "Updating system silently..."
+log "Updating system packages silently..."
 sudo apt-get update -qq > /dev/null
 sudo apt-get upgrade -y -qq > /dev/null
-log "System update completed."
+log "System update and upgrade completed."
 
 # ----------------------------
-# Install Requirements
+# Install prerequisites
 # ----------------------------
 log "Installing required packages..."
 sudo apt-get install -y -qq ca-certificates curl gnupg > /dev/null
 
 # ----------------------------
-# Add Repo
+# Add Team XLink repository
 # ----------------------------
-log "Configuring Team XLink repository..."
+log "Adding Team XLink repository and keys..."
 sudo mkdir -m 0755 -p /etc/apt/keyrings
 sudo rm -f /etc/apt/keyrings/teamxlink.gpg
 curl -fsSL https://dist.teamxlink.co.uk/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/teamxlink.gpg
@@ -120,11 +164,11 @@ if ! command -v kaiengine &>/dev/null; then
   log "Installing XLink Kai..."
   sudo apt-get install -y xlinkkai
 else
-  log "XLink Kai is already installed. Skipping."
+  log "XLink Kai already installed. Skipping installation."
 fi
 
 # ----------------------------
-# Service Setup
+# Setup systemd service
 # ----------------------------
 if $INSTALL_SERVICE; then
   log "Setting up systemd service ($SERVICE_NAME)..."
@@ -153,14 +197,15 @@ EOF
 fi
 
 # ----------------------------
-# Add MOTD (if chosen)
+# Add MOTD snippet
 # ----------------------------
 if $ADD_MOTD; then
-  log "Adding helpful info to login MOTD..."
+  log "Adding helpful info to SSH login MOTD..."
   sudo bash -c "cat > /etc/update-motd.d/99-xlinkkai" <<EOF
 #!/bin/sh
 IP=\$(hostname -I | awk '{print \$1}')
-echo "\n🔗 XLink Kai Web UI: http://\$IP:34522"
+echo ""
+echo "🔗 XLink Kai Web UI: http://\$IP:34522"
 echo "📡 Service status: systemctl status $SERVICE_NAME"
 echo "♻️  Restart with: systemctl restart $SERVICE_NAME"
 EOF
@@ -173,15 +218,15 @@ fi
 IP_ADDRESS=$(hostname -I | awk '{print $1}')
 [ -z "$IP_ADDRESS" ] && IP_ADDRESS="192.168.1.10"
 
-echo -e "\n========================================"
+echo -e "\n\e[1;32m========================================"
 echo "✅ Installation Complete"
-echo "Visit the Web UI: http://$IP_ADDRESS:34522"
-echo "Hostname: $CURRENT_HOSTNAME"
-$INSTALL_SERVICE && echo "Service name: $SERVICE_NAME (enabled)"
-echo "Use: systemctl status $SERVICE_NAME"
-echo "     systemctl restart $SERVICE_NAME"
-echo "========================================"
+echo -e "\e[0mVisit the Web UI: \e[1;36mhttp://$IP_ADDRESS:34522\e[0m"
+echo -e "\e[0mHostname: \e[1;36m$CURRENT_HOSTNAME\e[0m"
+$INSTALL_SERVICE && echo -e "Service name: \e[1;36m$SERVICE_NAME\e[0m (enabled)"
+echo -e "Use: \e[1;33msystemctl status $SERVICE_NAME\e[0m"
+echo -e "     \e[1;33msystemctl restart $SERVICE_NAME\e[0m"
+echo -e "========================================"
 echo "For help: https://github.com/theretrobristolian/xlinkkai"
 echo "Discord: https://discord.gg/dZRpsxyp"
 echo "Special thanks to user @CrunchBite"
-echo "========================================"
+echo -e "========================================\e[0m"
