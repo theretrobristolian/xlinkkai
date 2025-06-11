@@ -2,75 +2,70 @@
 
 set -e
 
-# Globals
-DEFAULT_CONFIG_FILE="/etc/kaiengine.conf"
-SERVICE_NAME="xlink-kai"
-SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 INSTALL_FLAG="/usr/bin/kaiengine"
-FINAL_HOSTNAME="$(hostname)"
-IP_ADDRESS="$(hostname -I | awk '{print $1}' || echo "192.168.1.10")"
+SERVICE_NAME="xlink-kai"
+KAI_CONFIG="/etc/kaiengine.conf"
+MOTD_FILE="/etc/motd"
 
-# Functions
-
+# Ensure script is run as root
 check_root() {
   if [ "$EUID" -ne 0 ]; then
-    echo "This script must be run as root. Please use 'sudo'."
+    echo "⚠️  Please run this script as root or using sudo."
     exit 1
   fi
 }
 
+# Install sudo if it's not present
 install_sudo_if_missing() {
-  if ! command -v sudo &>/dev/null; then
-    echo "Installing 'sudo'..."
-    apt-get update -y && apt-get install -y sudo
+  if ! command -v sudo &> /dev/null; then
+    echo "⚙️  Installing sudo..."
+    apt-get update && apt-get install -y sudo
   fi
 }
 
 ask_hostname_change() {
-  CURRENT_HOSTNAME=$(hostname)
-  read -rp "Your current hostname is '$CURRENT_HOSTNAME'. Change it to 'xlinkkai'? (y/N): " answer
-  if [[ "$answer" =~ ^[Yy]$ ]]; then
+  current_hostname=$(hostname)
+  echo "Your current hostname is: $current_hostname"
+  read -rp "Would you like to change it to 'xlinkkai'? (y/N): " change_hostname
+  if [[ "$change_hostname" =~ ^[Yy]$ ]]; then
+    echo "Changing hostname to 'xlinkkai'..."
     hostnamectl set-hostname xlinkkai
-    sed -i "/127.0.1.1/d" /etc/hosts
-    echo "127.0.1.1 xlinkkai" >> /etc/hosts
-    FINAL_HOSTNAME="xlinkkai"
-    echo "Hostname changed to xlinkkai."
+    echo "127.0.1.1 xlinkkai" | tee -a /etc/hosts > /dev/null
+    final_hostname="xlinkkai"
   else
-    FINAL_HOSTNAME="$CURRENT_HOSTNAME"
-    echo "Keeping existing hostname: $FINAL_HOSTNAME"
+    final_hostname="$current_hostname"
   fi
 }
 
 install_prerequisites() {
-  echo "Installing prerequisites..."
-  sudo apt-get update -y
-  sudo apt-get upgrade -y
-  sudo apt-get install -y ca-certificates curl gnupg
-}
-
-configure_repository() {
-  echo "Adding Team XLink repo..."
-  sudo mkdir -m 0755 -p /etc/apt/keyrings
-  sudo rm -f /etc/apt/keyrings/teamxlink.gpg
-  curl -fsSL https://dist.teamxlink.co.uk/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/teamxlink.gpg
-  sudo chmod a+r /etc/apt/keyrings/teamxlink.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/teamxlink.gpg] https://dist.teamxlink.co.uk/linux/debian/static/deb/release/ /" | sudo tee /etc/apt/sources.list.d/teamxlink.list > /dev/null
+  echo "🔧 Installing prerequisites..."
+  apt-get update
+  apt-get install -y ca-certificates curl gnupg
 }
 
 install_xlinkkai() {
   if [ -f "$INSTALL_FLAG" ]; then
-    echo "XLink Kai is already installed. Skipping install."
-  else
-    configure_repository
-    echo "Installing XLink Kai..."
-    sudo apt-get update
-    sudo apt-get install -y xlinkkai
+    echo "✅ XLink Kai already appears to be installed. Skipping reinstallation."
+    return
   fi
+
+  echo "🔑 Configuring Team XLink repository..."
+  mkdir -m 0755 -p /etc/apt/keyrings
+  rm -f /etc/apt/keyrings/teamxlink.gpg
+  curl -fsSL https://dist.teamxlink.co.uk/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/teamxlink.gpg
+  chmod a+r /etc/apt/keyrings/teamxlink.gpg
+
+  echo "📦 Adding repo..."
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/teamxlink.gpg] https://dist.teamxlink.co.uk/linux/debian/static/deb/release/ /" | tee /etc/apt/sources.list.d/teamxlink.list > /dev/null
+
+  echo "📥 Installing XLink Kai..."
+  apt-get update
+  apt-get install -y xlinkkai
 }
 
 setup_service() {
-  echo "Creating and enabling the ${SERVICE_NAME} service..."
-  cat > "$SERVICE_FILE" <<EOF
+  echo "🔧 Setting up systemd service ($SERVICE_NAME)..."
+  cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOF
 [Unit]
 Description=XLink Kai Engine
 Wants=network.target
@@ -82,92 +77,115 @@ WantedBy=multi-user.target
 [Service]
 ExecStartPre=/bin/sleep 30
 ExecStart=/usr/bin/kaiengine
-Restart=always
 GuessMainPID=yes
+Restart=always
 StartLimitInterval=5min
 StartLimitBurst=4
 StartLimitAction=reboot-force
 EOF
 
-  sudo systemctl daemon-reload
-  sudo systemctl enable "$SERVICE_NAME"
-  sudo systemctl start "$SERVICE_NAME"
+  systemctl daemon-reload
+  systemctl enable ${SERVICE_NAME}
+  systemctl start ${SERVICE_NAME}
+  echo "✅ Service ${SERVICE_NAME} enabled and started."
 }
 
-add_info_to_motd() {
-  echo "Appending key info to /etc/motd..."
-  cat >> /etc/motd <<EOF
+add_to_motd() {
+  echo ""
+  read -rp "Would you like to add connection info to the SSH welcome message (MOTD)? (y/N): " add_motd
+  if [[ "$add_motd" =~ ^[Yy]$ ]]; then
+    IP_ADDRESS=$(hostname -I | awk '{print $1}')
+    if [ -z "$IP_ADDRESS" ]; then
+      IP_ADDRESS="192.168.1.10"
+    fi
 
------------------------------------------
-🚀 XLink Kai Info
-📡 Web UI: http://$IP_ADDRESS:34522
-🛠 Service: systemctl status $SERVICE_NAME
-▶️ Start:    sudo systemctl start $SERVICE_NAME
-⏹ Stop:     sudo systemctl stop $SERVICE_NAME
-🔄 Restart:  sudo systemctl restart $SERVICE_NAME
------------------------------------------
-EOF
+    echo "" >> "$MOTD_FILE"
+    echo "🕹️  Welcome to XLink Kai node" >> "$MOTD_FILE"
+    echo "Access the Web UI at: http://$IP_ADDRESS:34522" >> "$MOTD_FILE"
+    echo "To check status: sudo systemctl status $SERVICE_NAME" >> "$MOTD_FILE"
+    echo "To restart:       sudo systemctl restart $SERVICE_NAME" >> "$MOTD_FILE"
+    echo "To stop:          sudo systemctl stop $SERVICE_NAME" >> "$MOTD_FILE"
+    echo "" >> "$MOTD_FILE"
+    echo "✅ MOTD updated!"
+  else
+    echo "Skipping MOTD update."
+  fi
 }
 
 clean_uninstall() {
-  echo "Stopping and removing XLink Kai and configuration..."
-  sudo systemctl stop "$SERVICE_NAME" || true
-  sudo systemctl disable "$SERVICE_NAME" || true
-  sudo rm -f "$SERVICE_FILE"
-  sudo systemctl daemon-reload
-  sudo apt-get remove --purge -y xlinkkai || true
-  sudo rm -f "$DEFAULT_CONFIG_FILE"
-  sudo apt-get autoremove -y
-  sudo apt-get clean
-  echo "✅ XLink Kai has been fully removed."
+  echo "🧹 Performing clean uninstall..."
+  systemctl stop ${SERVICE_NAME} || true
+  systemctl disable ${SERVICE_NAME} || true
+  rm -f /etc/systemd/system/${SERVICE_NAME}.service
+  systemctl daemon-reload
+
+  apt-get purge -y xlinkkai
+  apt-get autoremove -y
+  rm -f "$KAI_CONFIG"
+  rm -f /etc/apt/sources.list.d/teamxlink.list
+  rm -f /etc/apt/keyrings/teamxlink.gpg
+  sed -i '/xlinkkai/d' /etc/hosts
+  sed -i '/XLink Kai/d' "$MOTD_FILE"
+
+  echo "✅ XLink Kai has been removed."
   exit 0
 }
 
 print_summary() {
-  echo -e "\n========================================="
-  echo "✅ Installation and setup completed!"
-  echo "Service: $(systemctl is-active $SERVICE_NAME || echo 'not installed')"
   echo ""
-  echo "🌐 Access the XLink Kai Web UI at:"
-  echo "  http://$IP_ADDRESS:34522"
-  echo "  OR, if DNS is configured:"
-  echo "  http://$FINAL_HOSTNAME:34522"
   echo "========================================="
+  echo "🎉 Installation and service setup complete!"
+  echo "To check service status: sudo systemctl status ${SERVICE_NAME}"
+  echo "To restart the service:  sudo systemctl restart ${SERVICE_NAME}"
   echo ""
-
-  read -rp "Would you like to add this info to your SSH welcome message (/etc/motd)? (y/N): " motd
-  if [[ "$motd" =~ ^[Yy]$ ]]; then
-    add_info_to_motd
-    echo "Info added to /etc/motd."
-  fi
-
+  echo "XLink Kai Web UI:"
+  echo "  http://$(hostname -I | awk '{print $1}'):34522"
+  echo "  or http://${final_hostname}:34522 (if hostname resolution is configured)"
   echo ""
-  echo "Provided by TheRetroBristolian 2025"
-  echo "  https://github.com/theretrobristolian/xlinkkai"
-  echo "  https://www.youtube.com/@TheRetroBristolian"
-  echo "  https://discord.gg/dZRpsxyp"
-  echo "Special thanks to @CrunchBite and the Team XLink community!"
+  echo "This script was brought to you by:"
+  echo "  🔗 https://github.com/theretrobristolian/xlinkkai"
+  echo "  🎥 https://www.youtube.com/@TheRetroBristolian"
+  echo ""
+  echo "Special thanks to the XLink Kai team:"
+  echo "  🌐 https://www.teamxlink.co.uk"
+  echo "  💬 https://discord.gg/dZRpsxyp"
+  echo "========================================="
 }
 
-# Main Flow
+main() {
+  check_root
+  install_sudo_if_missing
 
-check_root
-install_sudo_if_missing
+  clear
+  echo "============================================="
+  echo "🔧 XLink Kai Installer for Debian/Ubuntu"
+  echo "---------------------------------------------"
+  echo " Maintained by TheRetroBristolian"
+  echo " GitHub: https://github.com/theretrobristolian"
+  echo "============================================="
+  echo ""
 
-read -rp "Do you want to uninstall and remove XLink Kai? (y/N): " uninstall
-if [[ "$uninstall" =~ ^[Yy]$ ]]; then
-  clean_uninstall
-fi
+  if [ -f "$INSTALL_FLAG" ]; then
+    echo "🚨 XLink Kai appears to already be installed."
+    read -rp "Do you want to uninstall and remove it completely? (y/N): " uninstall
+    if [[ "$uninstall" =~ ^[Yy]$ ]]; then
+      clean_uninstall
+    fi
+  fi
 
-ask_hostname_change
-install_prerequisites
-install_xlinkkai
+  ask_hostname_change
+  install_prerequisites
+  install_xlinkkai
 
-read -rp "Do you want to install and run XLink Kai as a service? (y/N): " service
-if [[ "$service" =~ ^[Yy]$ ]]; then
-  setup_service
-else
-  echo "Skipping service setup."
-fi
+  read -rp "Do you want to install and run XLink Kai as a service? (y/N): " service
+  if [[ "$service" =~ ^[Yy]$ ]]; then
+    setup_service
+  else
+    echo "Skipping service setup."
+  fi
 
-print_summary
+  add_to_motd
+  print_summary
+}
+
+main
