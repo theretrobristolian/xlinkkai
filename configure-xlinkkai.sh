@@ -68,9 +68,7 @@ echo -e "\e[0m"
 echo "This script helps you install, configure, or remove XLink Kai"
 echo "Supported systems: Ubuntu Server, Debian 12, RetroNAS, etc."
 echo
-echo "You will be prompted for all option questions up front."
-echo -e "\e[0m"
-echo "============================================================"
+echo "You will be prompted for all option questions up front:"
 echo -e "\e[0m"
 
 # ----------------------------
@@ -255,8 +253,7 @@ if $ADD_MOTD; then
   MOTD_FILE="/etc/update-motd.d/99-xlinkkai-info"
   sudo tee "$MOTD_FILE" > /dev/null <<EOF
 #!/bin/sh
-echo ""
-echo -e "\n========================================="
+echo "\n========================================="
 echo ""
 echo "Welcome to XLink Kai Server!"
 echo ""
@@ -266,7 +263,7 @@ echo "  http://xlinkkai:34522"
 echo ""
 echo "Visit https://github.com/theretrobristolian/xlinkkai for more info."
 echo ""
-echo -e "\n========================================="
+echo "\n========================================="
 EOF
   sudo chmod +x "$MOTD_FILE"
   log "MOTD updated."
@@ -290,5 +287,6 @@ echo ""
 echo "This script could not have been possible without special thanks to the XLink Kai team:"
 echo "  https://www.teamxlink.co.uk"
 echo "  https://discord.gg/dZRpsxyp - Team XLink (Official) Discord Server"
+echo ""
 log "All done! Enjoy your XLink Kai setup."
 exit 0
