@@ -160,6 +160,50 @@ else
   ADD_MOTD=false
 fi
 
+# Prompt to auto-configure XLink Kai
+if $INSTALL_PACKAGE || $XLINK_INSTALLED; then
+  if prompt_confirm "Would you like to auto-configure XLink Kai with your credentials?"; then
+    log "Preparing to update XLink Kai configuration..."
+
+    read -rp "Enter your XLink Kai username: " kai_user
+    read -rsp "Enter your XLink Kai password: " kai_pass
+    echo
+
+    step "Backing up existing config to $CONFIG_FILE.bak"
+    sudo cp "$CONFIG_FILE" "$CONFIG_FILE.bak" || true
+
+    declare -A config_updates=(
+      [kaiUsername]="$kai_user"
+      [kaiPassword]="$kai_pass"
+      [kaiAutoLogin]="1"
+      [kaiLaunchUI]="1"
+      [kaiSkin]="darkmode"
+      [kaiPAT]="0"
+      [kaiPort]="30000"
+    )
+
+    step "Applying new configuration..."
+    for key in "${!config_updates[@]}"; do
+      value="${config_updates[$key]}"
+      if grep -q "^$key=" "$CONFIG_FILE"; then
+        sudo sed -i -E "s|^$key=.*|$key=$value|g" "$CONFIG_FILE"
+      else
+        echo "$key=$value" | sudo tee -a "$CONFIG_FILE" > /dev/null
+      fi
+    done
+
+    log "Configuration updated."
+
+    if systemctl is-active --quiet $SERVICE_NAME; then
+      step "Restarting $SERVICE_NAME..."
+      sudo systemctl restart $SERVICE_NAME
+      log "Service restarted successfully."
+    fi
+  else
+    log "Skipping auto-configuration."
+  fi
+fi
+
 # ----------------------------
 # Show Summary & Confirm
 # ----------------------------
