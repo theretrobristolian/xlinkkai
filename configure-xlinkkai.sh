@@ -166,18 +166,9 @@ fi
 # ----------------------------
 # Show Summary & Confirm
 # ----------------------------
-echo -e "\n\e[38;5;214mYou selected the following options:\e[0m"  # Orange color
-$UNINSTALL && echo " - Uninstall existing XLink Kai install" || echo " - Do NOT uninstall existing install"
-$INSTALL_PACKAGE && echo " - Install XLink Kai package" || echo " - Do NOT install package"
-$UNINSTALL_SERVICE && echo " - Uninstall XLink Kai systemd service" || echo " - Do NOT uninstall service"
-$INSTALL_SERVICE && echo " - Install and run XLink Kai as a systemd service" || echo " - Do NOT install/run service"
-$CHANGE_HOSTNAME && echo " - Change hostname to 'xlinkkai'" || echo " - Keep hostname as '$CURRENT_HOSTNAME'"
-$ADD_MOTD && echo " - Add helpful MOTD on SSH login" || echo " - Do NOT modify SSH MOTD"
-
-if ! prompt_confirm "Are you sure you want to proceed with these changes?"; then
+if ! prompt_confirm "\e[38;5;214mAre you sure you want to proceed with these changes?\e[0m"; then
   die "User aborted."
 fi
-
 # ----------------------------
 # Actions
 # ----------------------------
@@ -208,7 +199,7 @@ if $INSTALL_PACKAGE; then
   log "Installing XLink Kai..."
   step "Updating the system... (This is an Update and Upgrade) (This can take a few minutes)"
   sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
-  sudo apt install -y ca-certificates curl gnupg -q > /dev/null
+  sudo apt-get install -y ca-certificates curl gnupg -q > /dev/null
   step "Configuring Team XLink repository..."
   sudo mkdir -m 0755 -p /etc/apt/keyrings
   sudo rm -f /etc/apt/keyrings/teamxlink.gpg
@@ -219,7 +210,7 @@ if $INSTALL_PACKAGE; then
   sudo apt-get update -y -q > /dev/null
   sudo apt-get install -y xlinkkai -q > /dev/null || die "Failed to install XLink Kai package. Exiting."
   log "Cleaning up..."
-  sudo apt-get autoremove -y
+  sudo apt-get autoremove -y -q > /dev/null
   sudo apt-get clean
 fi
 
@@ -244,15 +235,16 @@ WantedBy=multi-user.target
 EOF
   step "Enabling and starting service"
   sudo systemctl daemon-reload
-  sudo systemctl enable $SERVICE_NAME
-  sudo systemctl start $SERVICE_NAME
+  sudo systemctl enable $SERVICE_NAME > /dev/null 2>&1
+  step "Starting service $SERVICE_NAME..."
+  sudo systemctl start $SERVICE_NAME > /dev/null 2>&1
   log "Service installed and running."
 fi
 
 if $CHANGE_HOSTNAME; then
   log "Changing hostname..."
   step "Setting hostname to 'xlinkkai'"
-  echo "xlinkkai" | sudo tee /etc/hostname
+  echo "xlinkkai" | sudo tee /etc/hostname > /dev/null
   sudo hostnamectl set-hostname xlinkkai
   log "Hostname changed."
 fi
