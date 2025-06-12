@@ -275,6 +275,8 @@ if $AUTO_CONFIGURE; then
     [kaiAutoLogin]="1"
     [kaiLaunchUI]="1"
     [kaiSkin]="darkmode"
+    [kaiPAT]="0"
+    [kaiPort]="30000"
   )
 
   for key in "${!config_updates[@]}"; do
