@@ -52,6 +52,7 @@ __  ___     _       _       _  __     _
  \  /| |   | | '_ \| |/ /  | ' // _` | |
  /  \| |___| | | | |   <   | . \ (_| | |
 /_/\_\_____|_|_| |_|_|\_\  |_|\_\__,_|_|
+
 EOF
 echo -e "\e[37m============================================================"
 echo -e "\e[1;37mAutomated installer - provided by The Retro Bristolian"
@@ -69,6 +70,7 @@ echo " - Add helpful MOTD on SSH login"
 echo
 echo "You will be prompted for all options up front."
 echo "A summary will be shown before proceeding."
+echo -e "\e[0m"
 echo "============================================================"
 echo -e "\e[0m"
 
