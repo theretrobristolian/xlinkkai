@@ -40,6 +40,12 @@ if ! grep -iqE 'debian|ubuntu' /etc/os-release; then
   die "This script is only compatible with Debian-based systems."
 fi
 
+# Get the IP address of the VM
+IP_ADDRESS=$(hostname -I | awk '{print $1}')
+if [ -z "$IP_ADDRESS" ]; then
+    IP_ADDRESS="192.168.1.10" # Example fallback IP
+fi
+
 # ----------------------------
 # Clear screen & show header
 # ----------------------------
@@ -200,8 +206,9 @@ fi
 
 if $INSTALL_PACKAGE; then
   log "Installing XLink Kai..."
-  step "Updating the system"
+  step "Updating the system... (This is an Update and Upgrade) (This can take a few minutes)"
   sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
+  sudo apt install -y ca-certificates curl gnupg
   step "Configuring Team XLink repository..."
   sudo mkdir -m 0755 -p /etc/apt/keyrings
   sudo rm -f /etc/apt/keyrings/teamxlink.gpg
@@ -209,7 +216,7 @@ if $INSTALL_PACKAGE; then
   sudo chmod a+r /etc/apt/keyrings/teamxlink.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/teamxlink.gpg] https://dist.teamxlink.co.uk/linux/debian/static/deb/release/ /" | sudo tee /etc/apt/sources.list.d/teamxlink.list > /dev/null
   step "Installing XLink Kai package"
-  sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
+  sudo apt-get update -y -q > /dev/null
   sudo apt-get install -y xlinkkai || die "Failed to install XLink Kai package. Exiting."
   log "Cleaning up..."
   sudo apt-get autoremove -y
@@ -275,14 +282,24 @@ fi
 
 echo -e "\n========================================="
 echo "Installation and service setup completed!"
+echo -e "\n========================================="
+echo ""
 echo "To check the status of the XLink Kai service, run:"
 echo "  sudo systemctl status xlink-kai"
 echo ""
 echo "To access the XLink Kai Web UI, go to:"
 echo "  http://$IP_ADDRESS:34522"
 echo "  http://xlinkkai:34522"
-
 echo -e "=========================================\n"
-
+echo ""
+echo "This script has been provided by TheRetroBristolian 2025."
+echo "Further information can be found at:"
+echo "  https://github.com/theretrobristolian/xlinkkai"
+echo "  https://www.youtube.com/@TheRetroBristolian"
+echo ""
+echo "This script could not have been possible without special thanks to the XLink Kai team:"
+echo "  https://www.teamxlink.co.uk"
+echo "  https://discord.gg/dZRpsxyp - Team XLink (Official) Discord Server"
+echo ""
 log "All done! Enjoy your XLink Kai setup."
 exit 0
