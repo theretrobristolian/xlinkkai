@@ -68,8 +68,7 @@ echo -e "\e[0m"
 echo "This script helps you install, configure, or remove XLink Kai"
 echo "Supported systems: Ubuntu Server, Debian 12, RetroNAS, etc."
 echo
-echo "You will be prompted for all options up front."
-echo "A summary will be shown before proceeding."
+echo "You will be prompted for all option questions up front."
 echo -e "\e[0m"
 echo "============================================================"
 echo -e "\e[0m"
@@ -138,7 +137,7 @@ if $XLINK_INSTALLED || $INSTALL_PACKAGE || $SERVICE_PRESENT; then
 
   # Only ask to install the service if it's not already present and not being uninstalled
   if ! $SERVICE_PRESENT && ! $UNINSTALL_SERVICE; then
-    if prompt_confirm "Do you want to install and run XLink Kai as a systemd service?"; then
+    if prompt_confirm "Do you want to run XLink Kai as a systemd service? (Will autostart in the background)"; then
       INSTALL_SERVICE=true
     else
       INSTALL_SERVICE=false
@@ -166,7 +165,8 @@ fi
 # ----------------------------
 # Show Summary & Confirm
 # ----------------------------
-if ! prompt_confirm "\e[38;5;214mAre you sure you want to proceed with these changes?\e[0m"; then
+echo -e "\e[38;5;214mAre you sure you want to proceed with these changes?\e[0m"
+if ! prompt_confirm ""; then
   die "User aborted."
 fi
 # ----------------------------
@@ -197,10 +197,10 @@ fi
 
 if $INSTALL_PACKAGE; then
   log "Installing XLink Kai..."
-  step "Updating the system... (This is an Update and Upgrade) (This can take a few minutes)"
+  step "Updating the system, (This is an Update and Upgrade) (This can take a few minutes)"
   sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
   sudo apt-get install -y ca-certificates curl gnupg -q > /dev/null
-  step "Configuring Team XLink repository..."
+  step "Configuring Team XLink repository"
   sudo mkdir -m 0755 -p /etc/apt/keyrings
   sudo rm -f /etc/apt/keyrings/teamxlink.gpg
   curl -fsSL https://dist.teamxlink.co.uk/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/teamxlink.gpg
@@ -236,7 +236,7 @@ EOF
   step "Enabling and starting service"
   sudo systemctl daemon-reload
   sudo systemctl enable $SERVICE_NAME > /dev/null 2>&1
-  step "Starting service $SERVICE_NAME..."
+  step "Starting service $SERVICE_NAME"
   sudo systemctl start $SERVICE_NAME > /dev/null 2>&1
   log "Service installed and running."
 fi
