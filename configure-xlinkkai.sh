@@ -62,12 +62,6 @@ echo -e "\e[0m"
 echo "This script helps you install, configure, or remove XLink Kai"
 echo "Supported systems: Ubuntu Server, Debian 12, RetroNAS, etc."
 echo
-echo "Options include:"
-echo " - Change hostname to 'xlinkkai'"
-echo " - Install XLink Kai package"
-echo " - Install and run XLink Kai as a systemd service"
-echo " - Add helpful MOTD on SSH login"
-echo
 echo "You will be prompted for all options up front."
 echo "A summary will be shown before proceeding."
 echo -e "\e[0m"
@@ -206,8 +200,8 @@ fi
 
 if $INSTALL_PACKAGE; then
   log "Installing XLink Kai..."
-  step "Updating repositories"
-  sudo apt-get update
+  step "Updating the system"
+  sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
   step "Configuring Team XLink repository..."
   log "Configuring Team XLink repository..."
   sudo mkdir -m 0755 -p /etc/apt/keyrings
