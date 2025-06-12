@@ -234,7 +234,7 @@ Wants=network.target
 After=network.target
 
 [Service]
-ExecStartPre=/bin/sleep 30
+ExecStartPre=/bin/sleep 20
 ExecStart=/usr/bin/kaiengine
 Restart=always
 StartLimitInterval=5min
@@ -272,11 +272,9 @@ if $AUTO_CONFIGURE; then
   declare -A config_updates=(
     [kaiUsername]="$kai_user"
     [kaiPassword]="$kai_pass"
-    [kaiPort]="30000"
     [kaiAutoLogin]="1"
     [kaiLaunchUI]="1"
     [kaiSkin]="darkmode"
-    [kaiPAT]="0"
   )
 
   for key in "${!config_updates[@]}"; do
