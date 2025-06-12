@@ -251,8 +251,22 @@ EOF
   log "Service installed and running."
 fi
 
+validate_config() {
+  missing=()
+  [[ -z "$kai_user" ]] && missing+=("kai_user")
+  [[ -z "$kai_pass" ]] && missing+=("kai_pass")
+
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo "[ERROR] Missing required config values: ${missing[*]}"
+    exit 1
+  fi
+}
+
 if $AUTO_CONFIGURE; then
-  log "Applying XLink Kai configuration..."
+  step "Validating config values..."
+  validate_config
+
+  step "Applying XLink Kai configuration..."
   cp "$CONFIG_FILE" "$CONFIG_FILE.bak" || true
 
   declare -A config_updates=(
@@ -267,17 +281,21 @@ if $AUTO_CONFIGURE; then
 
   for key in "${!config_updates[@]}"; do
     value="${config_updates[$key]}"
-    if grep -q "^$key=" "$CONFIG_FILE"; then
-      sed -i -E "s|^$key=.*|$key=$value|g" "$CONFIG_FILE"
+    if grep -qE "^${key}=" "$CONFIG_FILE"; then
+      log "Updating $key=$value"
+      sed -i -E "s|^${key}=.*|${key}=${value}|" "$CONFIG_FILE"
     else
-      echo "$key=$value" >> "$CONFIG_FILE"
+      log "Adding $key=$value"
+      echo "${key}=${value}" >> "$CONFIG_FILE"
     fi
   done
 
-  if systemctl is-active --quiet $SERVICE_NAME; then
+  if systemctl is-active --quiet "$SERVICE_NAME"; then
     step "Restarting $SERVICE_NAME"
-    systemctl restart $SERVICE_NAME
+    systemctl restart "$SERVICE_NAME"
     log "Service restarted successfully."
+  else
+    log "$SERVICE_NAME is not running; not restarting."
   fi
 fi
 
