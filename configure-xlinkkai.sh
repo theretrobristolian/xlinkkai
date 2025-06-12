@@ -44,6 +44,7 @@ fi
 # Clear screen & show header
 # ----------------------------
 clear
+echo -e "\e[37m============================================================"
 echo -e "\e[1;32m"  # Green for ASCII art
 cat << "EOF"
 __  ___     _       _       _  __     _ 
@@ -52,11 +53,11 @@ __  ___     _       _       _  __     _
  /  \| |___| | | | |   <   | . \ (_| | |
 /_/\_\_____|_|_| |_|_|\_\  |_|\_\__,_|_|
 EOF
+echo -e "\e[37m============================================================"
 echo -e "\e[1;37mAutomated installer - provided by The Retro Bristolian"
 echo "GitHub: https://github.com/theretrobristolian/xlinkkai"
-echo -e "\e[0m"
-
 echo -e "\e[37m============================================================"
+echo -e "\e[0m"
 echo "This script helps you install, configure, or remove XLink Kai"
 echo "Supported systems: Ubuntu Server, Debian 12, RetroNAS, etc."
 echo
