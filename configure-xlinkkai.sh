@@ -208,7 +208,7 @@ if $INSTALL_PACKAGE; then
   log "Installing XLink Kai..."
   step "Updating the system... (This is an Update and Upgrade) (This can take a few minutes)"
   sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
-  sudo apt install -y ca-certificates curl gnupg
+  sudo apt install -y ca-certificates curl gnupg -q > /dev/null
   step "Configuring Team XLink repository..."
   sudo mkdir -m 0755 -p /etc/apt/keyrings
   sudo rm -f /etc/apt/keyrings/teamxlink.gpg
@@ -217,7 +217,7 @@ if $INSTALL_PACKAGE; then
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/teamxlink.gpg] https://dist.teamxlink.co.uk/linux/debian/static/deb/release/ /" | sudo tee /etc/apt/sources.list.d/teamxlink.list > /dev/null
   step "Installing XLink Kai package"
   sudo apt-get update -y -q > /dev/null
-  sudo apt-get install -y xlinkkai || die "Failed to install XLink Kai package. Exiting."
+  sudo apt-get install -y xlinkkai -q > /dev/null || die "Failed to install XLink Kai package. Exiting."
   log "Cleaning up..."
   sudo apt-get autoremove -y
   sudo apt-get clean
@@ -283,7 +283,6 @@ fi
 echo -e "\n========================================="
 echo "Installation and service setup completed!"
 echo -e "\n========================================="
-echo ""
 echo "To check the status of the XLink Kai service, run:"
 echo "  sudo systemctl status xlink-kai"
 echo ""
@@ -291,7 +290,6 @@ echo "To access the XLink Kai Web UI, go to:"
 echo "  http://$IP_ADDRESS:34522"
 echo "  http://xlinkkai:34522"
 echo -e "=========================================\n"
-echo ""
 echo "This script has been provided by TheRetroBristolian 2025."
 echo "Further information can be found at:"
 echo "  https://github.com/theretrobristolian/xlinkkai"
@@ -300,6 +298,5 @@ echo ""
 echo "This script could not have been possible without special thanks to the XLink Kai team:"
 echo "  https://www.teamxlink.co.uk"
 echo "  https://discord.gg/dZRpsxyp - Team XLink (Official) Discord Server"
-echo ""
 log "All done! Enjoy your XLink Kai setup."
 exit 0
