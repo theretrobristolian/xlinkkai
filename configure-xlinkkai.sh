@@ -203,13 +203,13 @@ if $INSTALL_PACKAGE; then
   step "Updating the system"
   sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
   step "Configuring Team XLink repository..."
-  log "Configuring Team XLink repository..."
   sudo mkdir -m 0755 -p /etc/apt/keyrings
   sudo rm -f /etc/apt/keyrings/teamxlink.gpg
   curl -fsSL https://dist.teamxlink.co.uk/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/teamxlink.gpg
   sudo chmod a+r /etc/apt/keyrings/teamxlink.gpg
   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/teamxlink.gpg] https://dist.teamxlink.co.uk/linux/debian/static/deb/release/ /" | sudo tee /etc/apt/sources.list.d/teamxlink.list > /dev/null
   step "Installing XLink Kai package"
+  sudo apt-get update -q > /dev/null && sudo apt-get upgrade -y -q > /dev/null
   sudo apt-get install -y xlinkkai || die "Failed to install XLink Kai package. Exiting."
   log "Cleaning up..."
   sudo apt-get autoremove -y
