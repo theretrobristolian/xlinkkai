@@ -258,11 +258,11 @@ if $AUTO_CONFIGURE; then
   declare -A config_updates=(
     [kaiUsername]="$kai_user"
     [kaiPassword]="$kai_pass"
+    [kaiPort]="30000"
     [kaiAutoLogin]="1"
     [kaiLaunchUI]="1"
     [kaiSkin]="darkmode"
     [kaiPAT]="0"
-    [kaiPort]="30000"
   )
 
   for key in "${!config_updates[@]}"; do
@@ -313,7 +313,7 @@ fi
 
 echo -e "\n========================================="
 echo "Installation and service setup completed!"
-echo -e "\n========================================="
+echo ""
 echo "To check the status of the XLink Kai service, run:"
 echo "  sudo systemctl status xlink-kai"
 echo ""
