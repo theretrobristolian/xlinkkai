@@ -282,10 +282,8 @@ if $AUTO_CONFIGURE; then
   for key in "${!config_updates[@]}"; do
     value="${config_updates[$key]}"
     if grep -qE "^${key}=" "$CONFIG_FILE"; then
-      log "Updating $key=$value"
       sed -i -E "s|^${key}=.*|${key}=${value}|" "$CONFIG_FILE"
     else
-      log "Adding $key=$value"
       echo "${key}=${value}" >> "$CONFIG_FILE"
     fi
   done
